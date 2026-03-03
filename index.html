@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minecraft Wichita</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --dirt:    #8B6340;
+      --grass:   #5D9E3F;
+      --stone:   #7E7E7E;
+      --wood:    #A07A4A;
+      --sky:     #5BB8F5;
+      --dark:    #1a1a1a;
+      --cream:   #FFFDE7;
+      --gold:    #FFD700;
+    }
+
+    body {
+      background: var(--sky);
+      font-family: 'Press Start 2P', monospace;
+      color: var(--cream);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Pixel stars / clouds bg ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(2px 2px at 10% 15%, rgba(255,255,255,0.6) 0%, transparent 100%),
+        radial-gradient(2px 2px at 25% 35%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(2px 2px at 60% 10%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(2px 2px at 80% 25%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(3px 3px at 45% 5%,  rgba(255,255,255,0.3) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Ground strip ── */
+    .ground {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 64px;
+      z-index: 1;
+    }
+
+    .ground-grass {
+      height: 16px;
+      background: var(--grass);
+      image-rendering: pixelated;
+    }
+
+    .ground-dirt {
+      height: 48px;
+      background: var(--dirt);
+      background-image:
+        repeating-linear-gradient(
+          90deg,
+          transparent, transparent 15px,
+          rgba(0,0,0,0.08) 15px, rgba(0,0,0,0.08) 16px
+        ),
+        repeating-linear-gradient(
+          0deg,
+          transparent, transparent 15px,
+          rgba(0,0,0,0.08) 15px, rgba(0,0,0,0.08) 16px
+        );
+    }
+
+    /* ── Main content ── */
+    .page {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 100px;
+      gap: 40px;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-grass {
+      width: 64px; height: 64px;
+      background: var(--grass);
+      border: 4px solid rgba(0,0,0,0.4);
+      box-shadow: inset -4px -4px 0 rgba(0,0,0,0.3), inset 4px 4px 0 rgba(255,255,255,0.15);
+      image-rendering: pixelated;
+      position: relative;
+    }
+
+    .logo-grass::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 20px;
+      background: var(--dirt);
+    }
+
+    .title {
+      font-size: clamp(18px, 4vw, 28px);
+      color: #fff;
+      text-shadow:
+        3px 3px 0 #000,
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .title span {
+      color: var(--gold);
+    }
+
+    .subtitle {
+      font-size: 9px;
+      color: rgba(255,255,255,0.85);
+      text-shadow: 2px 2px 0 #000;
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    /* ── Server IP card ── */
+    .ip-card {
+      background: rgba(0,0,0,0.75);
+      border: 4px solid var(--grass);
+      box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+      padding: 24px 32px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .ip-label {
+      font-size: 8px;
+      color: var(--grass);
+      letter-spacing: 2px;
+    }
+
+    .ip-address {
+      font-size: clamp(11px, 2.5vw, 15px);
+      color: var(--gold);
+      text-shadow: 2px 2px 0 #000;
+      cursor: pointer;
+      border: 2px dashed rgba(255,215,0,0.4);
+      padding: 10px 20px;
+      transition: background 0.15s;
+      word-break: break-all;
+    }
+
+    .ip-address:hover {
+      background: rgba(255,215,0,0.1);
+    }
+
+    .copy-hint {
+      font-size: 7px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .copy-hint.copied {
+      color: var(--grass);
+    }
+
+    /* ── Features grid ── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      max-width: 700px;
+      width: 100%;
+    }
+
+    .feature-block {
+      background: rgba(0,0,0,0.7);
+      border: 3px solid var(--stone);
+      box-shadow: 3px 3px 0 rgba(0,0,0,0.5);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .feature-icon {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .feature-title {
+      font-size: 9px;
+      color: var(--gold);
+      text-shadow: 1px 1px 0 #000;
+    }
+
+    .feature-desc {
+      font-size: 7px;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.8;
+    }
+
+    /* ── Wichita section ── */
+    .wichita-card {
+      background: rgba(0,0,0,0.7);
+      border: 3px solid var(--wood);
+      box-shadow: 3px 3px 0 rgba(0,0,0,0.5);
+      padding: 24px;
+      max-width: 600px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      text-align: center;
+    }
+
+    .wichita-title {
+      font-size: 11px;
+      color: var(--wood);
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    .wichita-desc {
+      font-size: 7px;
+      color: rgba(255,255,255,0.75);
+      line-height: 2;
+    }
+
+    /* ── Join button ── */
+    .join-btn {
+      display: inline-block;
+      background: var(--grass);
+      color: #fff;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 11px;
+      padding: 14px 28px;
+      border: none;
+      border-bottom: 6px solid #3a7a28;
+      box-shadow: 4px 4px 0 rgba(0,0,0,0.4);
+      cursor: pointer;
+      text-decoration: none;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+      transition: transform 0.1s, border-bottom-width 0.1s;
+      margin-top: 8px;
+    }
+
+    .join-btn:hover {
+      transform: translateY(2px);
+      border-bottom-width: 4px;
+    }
+
+    .join-btn:active {
+      transform: translateY(6px);
+      border-bottom-width: 0;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      font-size: 7px;
+      color: rgba(255,255,255,0.35);
+      text-align: center;
+      line-height: 2;
+    }
+
+    /* ── Pixel divider ── */
+    .pixel-divider {
+      width: 100%;
+      max-width: 500px;
+      height: 4px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--grass) 0px, var(--grass) 8px,
+        transparent 8px, transparent 12px
+      );
+      opacity: 0.5;
+    }
+
+    /* ── Floating blocks animation ── */
+    .float-block {
+      position: fixed;
+      width: 24px; height: 24px;
+      opacity: 0.12;
+      animation: floatUp linear infinite;
+      z-index: 0;
+      image-rendering: pixelated;
+    }
+
+    .float-block.grass { background: var(--grass); }
+    .float-block.dirt  { background: var(--dirt);  }
+    .float-block.stone { background: var(--stone); }
+
+    @keyframes floatUp {
+      from { transform: translateY(100vh) rotate(0deg); opacity: 0.12; }
+      to   { transform: translateY(-100px) rotate(180deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating ambient blocks -->
+  <div class="float-block grass" style="left:5%;  animation-duration:18s; animation-delay:0s;"></div>
+  <div class="float-block dirt"  style="left:20%; animation-duration:24s; animation-delay:4s;"></div>
+  <div class="float-block stone" style="left:50%; animation-duration:20s; animation-delay:8s;"></div>
+  <div class="float-block grass" style="left:75%; animation-duration:22s; animation-delay:2s;"></div>
+  <div class="float-block dirt"  style="left:90%; animation-duration:16s; animation-delay:6s;"></div>
+
+  <div class="page">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-grass"></div>
+      <h1 class="title">Minecraft<br><span>Wichita</span></h1>
+      <p class="subtitle">
+        Wichita's local Minecraft community.<br>
+        Build, survive, and explore with<br>
+        people from the ICT.
+      </p>
+    </div>
+
+    <!-- Server IP -->
+    <div class="ip-card">
+      <div class="ip-label">▶ SERVER IP</div>
+      <div class="ip-address" id="ipAddr" onclick="copyIP()">
+        play.minecraft-wichita.com
+      </div>
+      <div class="copy-hint" id="copyHint">click to copy</div>
+      <a class="join-btn" href="minecraft://play.minecraft-wichita.com">
+        ▶ JOIN SERVER
+      </a>
+    </div>
+
+    <div class="pixel-divider"></div>
+
+    <!-- Features -->
+    <div class="features">
+      <div class="feature-block">
+        <div class="feature-icon">⛏️</div>
+        <div class="feature-title">SURVIVAL</div>
+        <div class="feature-desc">Vanilla survival world. No pay-to-win. Just dig, build, and grind.</div>
+      </div>
+      <div class="feature-block">
+        <div class="feature-icon">🌾</div>
+        <div class="feature-title">COMMUNITY</div>
+        <div class="feature-desc">Wichita players only. Build a community you actually know IRL.</div>
+      </div>
+      <div class="feature-block">
+        <div class="feature-icon">🗺️</div>
+        <div class="feature-title">EXPLORE</div>
+        <div class="feature-desc">Fresh world. No grief, no chaos. A real place to settle down and build.</div>
+      </div>
+    </div>
+
+    <div class="pixel-divider"></div>
+
+    <!-- Wichita section -->
+    <div class="wichita-card">
+      <div class="wichita-title">🌾 Built for the ICT</div>
+      <p class="wichita-desc">
+        This isn't some random public server.<br>
+        It's a Wichita thing.<br><br>
+        A place for local players to connect,<br>
+        build something together, and actually<br>
+        know who you're playing with.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      minecraft-wichita.com<br>
+      not affiliated with mojang or microsoft
+    </div>
+
+  </div>
+
+  <!-- Ground -->
+  <div class="ground">
+    <div class="ground-grass"></div>
+    <div class="ground-dirt"></div>
+  </div>
+
+  <script>
+    function copyIP() {
+      navigator.clipboard.writeText('play.minecraft-wichita.com').then(() => {
+        const hint = document.getElementById('copyHint');
+        hint.textContent = '✓ copied!';
+        hint.classList.add('copied');
+        setTimeout(() => {
+          hint.textContent = 'click to copy';
+          hint.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>
